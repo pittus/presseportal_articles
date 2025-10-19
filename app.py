@@ -22,6 +22,44 @@ import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
+# --- Simple Password Login (ENV) ---
+ADMIN_USER = os.getenv("ADMIN_USER", "")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+
+def require_login():
+    # Falls keine Server-Creds gesetzt sind, klar kommunizieren:
+    if not ADMIN_USER or not ADMIN_PASSWORD:
+        st.error("Login ist aktiviert, aber ADMIN_USER/ADMIN_PASSWORD fehlen als Env-Variablen.")
+        st.stop()
+
+    # Bereits eingeloggt?
+    if st.session_state.get("authenticated", False):
+        return
+
+    st.title("🔐 Login")
+    with st.form("login_form", clear_on_submit=False):
+        username = st.text_input("Benutzername")
+        password = st.text_input("Passwort", type="password")
+        remember = st.checkbox("Eingeloggt bleiben", value=True)
+        submitted = st.form_submit_button("Anmelden")
+
+    if submitted:
+        if username == ADMIN_USER and password == ADMIN_PASSWORD:
+            st.session_state["authenticated"] = True
+            # Optionale Merk-Flag – hier nur als Info genutzt
+            st.session_state["remember_me"] = remember
+            st.success("Erfolgreich angemeldet.")
+            st.experimental_rerun()
+        else:
+            st.error("Ungültiger Benutzername oder Passwort.")
+            # harter Stop, damit der Rest der App nicht rendert
+            st.stop()
+    else:
+        # Login-Form zeigen und Rendering der App stoppen
+        st.stop()
+
+# Login jetzt erzwingen (vor allem anderen App-Content)
+require_login()
 
 # ---- OpenAI Client ----
 try:
