@@ -255,39 +255,34 @@ def writer_prompt(site_profile: dict, fewshots: List[dict], source_text: str, so
 #         "}"
 #     )
 #     return system, user
-
 def judge_prompt(site_profile: dict, article_json: Dict[str, Any], source_text: str) -> Tuple[str, str]:
     system = (
-        "Du bist QA-Redakteur:in. Prüfe streng, belege Aussagen und suche aktiv nach Fehlern. "
-        "Antwort NUR als valides JSON gemäß Vorgabe."
+        "Du bist QA-Redakteur:in. Prüfe streng, kurz und binär. "
+        "Gib ausschließlich valides JSON gemäß Vorgabe zurück."
     )
 
     user = (
-        "Prüfe den Artikel gegen (1) das Style-Profile (site-spezifisch) und (2) den QUELLE_TEXT. "
-        "Arbeite in zwei Schritten: zuerst MUST-PASS, dann Scores.\n\n"
-        "MUST-PASS (harte K.O.-Kriterien):\n"
-        "- Fakten NUR aus QUELLE_TEXT (keine neuen Details, keine Spekulationen).\n"
-        "- Unschuldsvermutung (Formulierungen wie 'Tatverdächtig', 'laut Polizei').\n"
-        "- Opferschutz/Minderjährige: keine identifizierenden Details.\n"
-        "- Keine beleidigenden/gefährlichen Inhalte; kein Doxing.\n"
-        "- Attribution: Quelle klar benannt (Polizei/Behörde), falls im Artikel vorhanden.\n"
-        "Wenn ein MUST-PASS verletzt ist: decision='human_review' und klar benennen.\n\n"
-        "SCORES (0..1) & Booleans:\n"
-        "- factual_consistency: Deckt JEDER inhaltliche Satz die Quelle ab? Zahlen/Orte/Zeit korrekt?\n"
-        "  1.0 nur wenn keinerlei Abweichung + >=2 evidence_spans; sonst max 0.9.\n"
-        "- style_match: Ton + Vorgaben aus STYLE_PROFILE_JSON (Headline-Regeln, Länge, Tonalität) erkennbar? \n"
-        "- length_ok: Wortzahl im erlaubten Range UND Headline ≤ max_chars UND (falls untersagt) kein '!'.\n"
-        "- structure_ok: Pflichtfelder gefüllt (headline, teaser_or_lead, ≥2 body_paragraphs).\n"
-        "- safety_ok: kein Verstoß gg. Sicherheit/Moderation.\n\n"
-        "Zusatz-Ausgaben (leichtgewichtig, bitte knapp halten):\n"
-        "- metrics: headline_length_chars, body_word_count (geschätzt, ohne SEO/Meta).\n"
-        "- evidence_spans: 2–4 kurze Textausschnitte (≤20 Wörter) aus QUELLE_TEXT, die Kernfakten belegen.\n"
-        "- entity_check: Listen mit inhaltlich relevanten Einheiten im Artikel, die NICHT in QUELLE_TEXT vorkommen (leere Listen, wenn alles gedeckt ist):\n"
-        "  { 'numbers_not_in_source': [], 'places_not_in_source': [], 'people_not_in_source': [] }\n\n"
+        "Prüfe den Artikel gegen (1) das site-spezifische STYLE_PROFILE_JSON und (2) den QUELLE_TEXT.\n"
+        "Arbeite in zwei Stufen: zuerst MUST-PASS (harte K.O.-Kriterien), dann Scores/Booleans.\n\n"
+        "MUST-PASS (harte K.O.-Kriterien – bei Verstoß => decision='human_review'):\n"
+        "1) Nur-Quelle-Fakten: Jeder inhaltliche Satz ist im QUELLE_TEXT belegbar (keine neuen Details, keine Spekulationen).\n"
+        "2) Unschuldsvermutung: Formulierungen wie 'tatverdächtig', 'laut Polizei', 'nach Angaben der Polizei'.\n"
+        "3) Opfer-/Minderjährigenschutz: Keine identifizierenden Details (Namen, exakte Adressen, Kennzeichen, Schulen).\n"
+        "4) Attribution vorhanden: Quelle Polizei/Behörde klar benannt (inkl. source_url, falls übergeben).\n"
+        "5) Safety: keine Beleidigung/Doxing/Aufruf zu Gewalt/sonstige Moderationsverstöße.\n"
+        "6) Headline & Länge regelkonform: Headline ≤ max_chars; wenn im Style verboten, kein '!'; Wortanzahl im Range.\n"
+        "7) Pflichtstruktur vollständig: headline, teaser_or_lead, ≥2 body_paragraphs.\n"
+        "8) Zahlen/Ort/Zeit konsistent zur Quelle (keine Abweichungen).\n\n"
+        "SCORES/Booleans (kompakt halten):\n"
+        "- factual_consistency (0..1): 1.0 nur wenn keinerlei Abweichung zur Quelle.\n"
+        "- style_match (0..1): Ton/Headline-Regeln/Längenvorgaben der Site erkennbar eingehalten?\n"
+        "- length_ok (bool)\n"
+        "- structure_ok (bool)\n"
+        "- safety_ok (bool)\n\n"
         "STYLE_PROFILE_JSON:\n" + json.dumps(site_profile, ensure_ascii=False, indent=2) + "\n\n"
         "ARTIKEL_JSON:\n" + json.dumps(article_json, ensure_ascii=False, indent=2) + "\n\n"
         "QUELLE_TEXT:\n<<<\n" + source_text + "\n>>>\n\n"
-        "Gib NUR folgendes JSON zurück (ohne weitere Erklärungen):\n"
+        "Gib NUR dieses JSON zurück (ohne weitere Erklärungen):\n"
         "{\n"
         '  "metrics": {\n'
         '    "headline_length_chars": 0,\n'
@@ -300,18 +295,13 @@ def judge_prompt(site_profile: dict, article_json: Dict[str, Any], source_text: 
         '    "structure_ok": true,\n'
         '    "safety_ok": true\n'
         "  },\n"
-        '  "evidence_spans": ["...","..."],\n'
-        '  "entity_check": {\n'
-        '    "numbers_not_in_source": [],\n'
-        '    "places_not_in_source": [],\n'
-        '    "people_not_in_source": []\n'
-        "  },\n"
         '  "violations": ["..."],\n'
         '  "suggested_fixes": ["..."],\n'
         '  "decision": "auto_ok" | "revise" | "human_review"\n'
         "}"
     )
     return system, user
+
 
 
 
