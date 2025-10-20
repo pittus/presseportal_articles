@@ -71,7 +71,7 @@ client = OpenAI()
 
 # Default-Modelle (per Sidebar änderbar)
 ARTICLE_MODEL_DEFAULT = os.getenv("ARTICLE_MODEL", "gpt-4o-mini")
-JUDGE_MODEL_DEFAULT   = os.getenv("JUDGE_MODEL",   "o3-mini")  # Tipp: "o3-mini" für robustes Judging
+JUDGE_MODEL_DEFAULT   = os.getenv("JUDGE_MODEL",   "o3-mini")  
 
 # -------- Style-Profile --------
 STYLE_EXPRESS = {
@@ -232,29 +232,7 @@ def writer_prompt(site_profile: dict, fewshots: List[dict], source_text: str, so
     )
     return system, user
 
-# def judge_prompt(site_profile: dict, article_json: Dict[str, Any], source_text: str) -> Tuple[str, str]:
-#     system = "Du bist ein strenger Redaktionsprüfer. Antworte ausschließlich mit validem JSON."
-#     user = (
-#         "Validiere den Artikel gegen (1) das Style-Profile und (2) die Quelle. "
-#         "Bewerte und liefere Scores (0..1) sowie Entscheidung.\n\n"
-#         "STYLE_PROFILE_JSON:\n" + json.dumps(site_profile, ensure_ascii=False, indent=2) + "\n\n"
-#         "ARTIKEL_JSON:\n" + json.dumps(article_json, ensure_ascii=False, indent=2) + "\n\n"
-#         "QUELLE_TEXT:\n<<<\n" + source_text + "\n>>>\n\n"
-#         "Gib NUR folgendes JSON zurück:\n"
-#         "{\n"
-#         '  "scores": {\n'
-#         '    "factual_consistency": 0.0,\n'
-#         '    "style_match": 0.0,\n'
-#         '    "length_ok": true,\n'
-#         '    "structure_ok": true,\n'
-#         '    "safety_ok": true\n'
-#         "  },\n"
-#         '  "violations": ["..."],\n'
-#         '  "suggested_fixes": ["..."],\n'
-#         '  "decision": "auto_ok" | "revise"\n'
-#         "}"
-#     )
-#     return system, user
+
 def judge_prompt(site_profile: dict, article_json: Dict[str, Any], source_text: str) -> Tuple[str, str]:
     system = (
         "Du bist QA-Redakteur:in. Prüfe streng, kurz und binär. "
