@@ -341,7 +341,7 @@ def judge_article(site_profile: dict, article: Article, source_text: str) -> QCR
 
 # ---------------- Streamlit UI ----------------
 st.set_page_config(page_title="AI News POC (Chat Completions + JSON)", layout="wide")
-st.title("📰 Polizei-Meldung → Kurzartikel (express.de & ksta.de) – Chat + JSON-Mode")
+st.title("📰 Polizei-Meldung → Kurzartikel (express.de & ksta.de)")
 
 tab_app, tab_flow = st.tabs(["✍️ Generator", "🧭 Workflow"])
 
